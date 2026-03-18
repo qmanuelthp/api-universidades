@@ -1,13 +1,14 @@
-from flask import Flask, request, Response
+from flask import Flask, Response, request
 import pymysql
 import json
 import os
 
 app = Flask(__name__)
 
-# 🔐 TOKEN
-API_TOKEN = "profe123"
+# TOKEN
+TOKEN = "profe123"
 
+# Conexión a Railway MySQL
 def get_connection():
     return pymysql.connect(
         host="caboose.proxy.rlwy.net",
@@ -20,19 +21,11 @@ def get_connection():
 
 @app.route("/")
 def index():
-
     token = request.args.get("token")
 
-    # 🔐 VALIDAR TOKEN
-    if token != API_TOKEN:
-        return Response(
-            json.dumps({
-                "error": "Acceso denegado",
-                "mensaje": "Debes usar un token válido en la URL"
-            }, indent=4),
-            status=401,
-            mimetype='application/json'
-        )
+    # 🔐 Validar token
+    if token != TOKEN:
+        return {"error": "No autorizado"}, 401
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -78,10 +71,9 @@ def index():
 
     return Response(
         json.dumps(list(universidades.values()), indent=4, ensure_ascii=False),
-        mimetype='application/json'
+        mimetype="application/json"
     )
 
-# 🚀 Railway
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

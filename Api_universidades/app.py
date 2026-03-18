@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, render_template, redirect
+from flask import Flask, request, Response
 import pymysql
 import json
 import os
@@ -18,34 +18,21 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# =========================
-# 🔐 LOGIN SOLO TOKEN
-# =========================
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        token = request.form["token"]
-
-        if token == API_TOKEN:
-            return redirect(f"/?token={token}")
-        else:
-            return "❌ Token incorrecto"
-
-    return render_template("login.html")
-
-# =========================
-# 🌐 API JSON PROTEGIDA
-# =========================
 @app.route("/")
 def index():
 
     token = request.args.get("token")
 
+    # 🔐 VALIDAR TOKEN
     if token != API_TOKEN:
-        return """
-        <h2>🔒 Acceso restringido</h2>
-        <p>Usa /login para ingresar</p>
-        """
+        return Response(
+            json.dumps({
+                "error": "Acceso denegado",
+                "mensaje": "Debes usar un token válido en la URL"
+            }, indent=4),
+            status=401,
+            mimetype='application/json'
+        )
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -94,9 +81,7 @@ def index():
         mimetype='application/json'
     )
 
-# =========================
-# 🚀 RUN (Railway)
-# =========================
+# 🚀 Railway
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

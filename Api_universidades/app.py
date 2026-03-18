@@ -1,11 +1,13 @@
-from flask import Flask, Response
+from flask import Flask, request, Response, render_template, redirect
 import pymysql
 import json
 import os
 
 app = Flask(__name__)
 
-# 🔌 Conexión Railway
+# 🔐 TOKEN
+API_TOKEN = "profe123"
+
 def get_connection():
     return pymysql.connect(
         host="caboose.proxy.rlwy.net",
@@ -16,9 +18,35 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# 🌐 Endpoint JSON
+# =========================
+# 🔐 LOGIN SOLO TOKEN
+# =========================
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        token = request.form["token"]
+
+        if token == API_TOKEN:
+            return redirect(f"/?token={token}")
+        else:
+            return "❌ Token incorrecto"
+
+    return render_template("login.html")
+
+# =========================
+# 🌐 API JSON PROTEGIDA
+# =========================
 @app.route("/")
 def index():
+
+    token = request.args.get("token")
+
+    if token != API_TOKEN:
+        return """
+        <h2>🔒 Acceso restringido</h2>
+        <p>Usa /login para ingresar</p>
+        """
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -66,7 +94,9 @@ def index():
         mimetype='application/json'
     )
 
-# 🚀 Railway necesita esto
+# =========================
+# 🚀 RUN (Railway)
+# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

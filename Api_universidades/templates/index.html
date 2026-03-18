@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Panel de Universidades</title>
+
+<style>
+
+body{
+    font-family:"Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg,#4b6cb7,#182848);
+    margin:0;
+    padding:40px;
+}
+
+.container{
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
+h1{
+    text-align:center;
+    color:#333;
+    margin-bottom:30px;
+}
+
+h2{
+    color:#444;
+}
+
+button{
+    padding:10px 18px;
+    background:#4b6cb7;
+    border:none;
+    color:white;
+    border-radius:6px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#2f4a9e;
+}
+
+select{
+    padding:8px;
+    margin:10px 10px 20px 0;
+    border-radius:5px;
+}
+
+pre{
+    background:#1e1e1e;
+    color:#00ff9c;
+    padding:20px;
+    border-radius:8px;
+    overflow:auto;
+    max-height:400px;
+    font-size:14px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+th{
+    background:#4b6cb7;
+    color:white;
+    padding:12px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+}
+
+tr:hover{
+    background:#f5f5f5;
+}
+
+ul{
+    padding-left:18px;
+}
+
+li{
+    margin-bottom:4px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Panel de Universidades</h1>
+
+<button onclick="verTodoJSON()">Ver JSON</button>
+
+<pre id="jsonCompleto">Haz clic en el botón para mostrar todo el JSON</pre>
+
+<h2>Universidades</h2>
+
+<label><b>Filtrar por estado:</b></label>
+<select id="filtroEstado" onchange="filtrarTodo()">
+<option value="todos">Todos</option>
+</select>
+
+<label><b>Filtrar por carrera:</b></label>
+<select id="filtroCarrera" onchange="filtrarTodo()">
+<option value="todas">Todas</option>
+</select>
+
+<table>
+
+<tr>
+<th>Nombre</th>
+<th>Ciudad</th>
+<th>Estado</th>
+<th>Tipo</th>
+<th>Modalidad</th>
+<th>Carreras</th>
+</tr>
+
+{% for u in universidades %}
+<tr class="filaUniversidad">
+
+<td>{{ u.nombre }}</td>
+<td>{{ u.ciudad }}</td>
+<td>{{ u.estado }}</td>
+<td>{{ u.tipo }}</td>
+<td>{{ u.modalidad }}</td>
+
+<td>
+<ul>
+
+{% for carrera in u.carreras %}
+<li>{{ carrera }}</li>
+{% endfor %}
+
+</ul>
+</td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<script>
+
+const dataCompleta = {
+universidades: [
+{% for u in universidades %}
+{
+"nombre": "{{ u.nombre }}",
+"ciudad": "{{ u.ciudad }}",
+"estado": "{{ u.estado }}",
+"tipo": "{{ u.tipo }}",
+"modalidad": "{{ u.modalidad }}",
+"carreras": [
+{% for carrera in u.carreras %}
+"{{ carrera }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+}{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+};
+
+function verTodoJSON(){
+
+document.getElementById('jsonCompleto').textContent =
+JSON.stringify(dataCompleta,null,2);
+
+}
+
+function cargarFiltros(){
+
+let carreras = new Set()
+let estados = new Set()
+
+dataCompleta.universidades.forEach(u=>{
+
+estados.add(u.estado)
+
+u.carreras.forEach(c=>{
+carreras.add(c)
+})
+
+})
+
+let selectCarrera = document.getElementById("filtroCarrera")
+let selectEstado = document.getElementById("filtroEstado")
+
+carreras.forEach(carrera=>{
+
+let option = document.createElement("option")
+option.value = carrera
+option.textContent = carrera
+
+selectCarrera.appendChild(option)
+
+})
+
+estados.forEach(estado=>{
+
+let option = document.createElement("option")
+option.value = estado
+option.textContent = estado
+
+selectEstado.appendChild(option)
+
+})
+
+}
+
+function filtrarTodo(){
+
+let carrera = document.getElementById("filtroCarrera").value
+let estado = document.getElementById("filtroEstado").value
+
+let filas = document.querySelectorAll(".filaUniversidad")
+
+dataCompleta.universidades.forEach((u,index)=>{
+
+let fila = filas[index]
+
+let cumpleCarrera =
+(carrera==="todas") || u.carreras.includes(carrera)
+
+let cumpleEstado =
+(estado==="todos") || u.estado===estado
+
+if(cumpleCarrera && cumpleEstado){
+fila.style.display=""
+}else{
+fila.style.display="none"
+}
+
+})
+
+}
+
+window.onload = cargarFiltros
+
+</script>
+
+</body>
+</html>
